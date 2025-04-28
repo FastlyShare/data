@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DFS Graph Visualization</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    #canvas {
+      border: 1px solid #ccc;
+      background-color: #f9f9f9;
+    }
+    #controls {
+      margin-top: 20px;
+    }
+    input, button {
+      padding: 8px;
+      margin: 5px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>DFS Visualization on Graph</h1>
+
+<canvas id="canvas" width="600" height="400"></canvas>
+
+<div id="controls">
+  <input type="number" id="key" placeholder="Enter key to search">
+  <button onclick="startDFS()">Start DFS</button>
+</div>
+<div id="explanation" style="max-width: 800px; margin: 30px auto; text-align: left; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background: #fafafa;">
+  <h2>Explanation</h2>
+  <p><strong>Graph:</strong> The graph is made up of 6 nodes, each assigned a random integer between 0 and 99. Nodes are connected based on a predefined structure using an adjacency list. Edges are visually shown as lines connecting the nodes.</p>
+
+  <p><strong>Depth First Search (DFS):</strong> DFS is a graph traversal algorithm that starts at a selected node (here, node 0) and explores as far as possible along each branch before backtracking. It dives deep into the graph, visiting child nodes first, before moving sideways to siblings.</p>
+
+  <p><strong>Visualization Behavior:</strong></p>
+  <ul>
+    <li>When you enter a key and click "Start DFS," the algorithm begins searching from node 0.</li>
+    <li>Each visited node is highlighted in <span style="color:blue;"><strong>light blue</strong></span>.</li>
+    <li>If the key is found, the corresponding node turns <span style="color:green;"><strong>light green</strong></span> and an alert shows the success message.</li>
+    <li>If the search finishes without finding the key, a message tells you the key was not found.</li>
+  </ul>
+
+  <p><strong>Key Points:</strong></p>
+  <ul>
+    <li>DFS goes deeper into the graph first, exploring one neighbor's full branch before moving to another neighbor.</li>
+    <li>The search animation has a delay to help you visually track the progress step-by-step.</li>
+    <li>The traversal uses recursion to go deep, marking nodes visited to avoid loops.</li>
+  </ul>
+
+  <p style="font-style: italic; color: #555;">Try different key values to see how DFS explores the graph in different paths!</p>
+</div>
+<script>
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  const nodeRadius = 20;
+
+  // Node positions
+  const nodes = [
+    { x: 100, y: 100, value: randomValue(), visited: false },
+    { x: 300, y: 100, value: randomValue(), visited: false },
+    { x: 500, y: 100, value: randomValue(), visited: false },
+    { x: 100, y: 300, value: randomValue(), visited: false },
+    { x: 300, y: 300, value: randomValue(), visited: false },
+    { x: 500, y: 300, value: randomValue(), visited: false }
+  ];
+
+  // Graph adjacency list
+  const adjList = {
+    0: [1, 3],
+    1: [0, 2, 4],
+    2: [1],
+    3: [0, 4],
+    4: [1, 3, 5],
+    5: [4]
+  };
+
+  function randomValue() {
+    return Math.floor(Math.random() * 100);
+  }
+
+  function drawGraph() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw edges
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 2;
+    for (let from in adjList) {
+      for (let to of adjList[from]) {
+        if (parseInt(from) < to) { // avoid double-drawing
+          ctx.beginPath();
+          ctx.moveTo(nodes[from].x, nodes[from].y);
+          ctx.lineTo(nodes[to].x, nodes[to].y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Draw nodes
+    for (let i = 0; i < nodes.length; i++) {
+      ctx.beginPath();
+      ctx.arc(nodes[i].x, nodes[i].y, nodeRadius, 0, 2 * Math.PI);
+
+      if (nodes[i].visited === 'found') {
+        ctx.fillStyle = 'lightgreen';
+      } else if (nodes[i].visited) {
+        ctx.fillStyle = 'lightblue';
+      } else {
+        ctx.fillStyle = 'lightgray';
+      }
+      ctx.fill();
+      ctx.strokeStyle = 'black';
+      ctx.stroke();
+
+      ctx.fillStyle = 'black';
+      ctx.font = 'bold 16px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(nodes[i].value, nodes[i].x, nodes[i].y);
+    }
+  }
+
+  async function startDFS() {
+    const key = parseInt(document.getElementById('key').value);
+    if (isNaN(key)) {
+      alert('Please enter a valid number.');
+      return;
+    }
+
+    // Reset visited flags
+    for (let node of nodes) {
+      node.visited = false;
+    }
+    drawGraph();
+
+    const found = await dfs(0, key);
+    if (!found) {
+      alert(`Key ${key} not found in the graph.`);
+    }
+  }
+
+  async function dfs(current, key) {
+    nodes[current].visited = true;
+    drawGraph();
+    await sleep(700);
+
+    if (nodes[current].value === key) {
+      nodes[current].visited = 'found';
+      drawGraph();
+      alert(`Key ${key} found at node ${current + 1}!`);
+      return true;
+    }
+
+    for (let neighbor of adjList[current]) {
+      if (!nodes[neighbor].visited) {
+        const found = await dfs(neighbor, key);
+        if (found) return true;
+      }
+    }
+    return false;
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  drawGraph();
+</script>
+
+</body>
+</html>
